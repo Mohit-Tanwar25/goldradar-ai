@@ -1,0 +1,75 @@
+{
+  "metadata": {
+    "module": "Gold Contract Radar — Walk-Forward Backtesting Engine",
+    "phase": "Phase 6",
+    "version": "1.0.0",
+    "created_date": "2026-10-25",
+    "description": "Configuration settings for leakage-free, chronological walk-forward backtesting of MCX gold cross-product and calendar-spread strategies.",
+    "execution_disclaimer": "Simulations use next-trading-session Open prices as reference fill proxies. Daily bhavcopy data cannot confirm intraday continuous quotes, bid-ask spread crossing, or simultaneous two-leg fills."
+  },
+  "execution_rules": {
+    "default_execution_convention": "next_session_open",
+    "prohibit_same_close_entry": true,
+    "require_both_legs_traded": true,
+    "reject_zero_volume_next_open": true,
+    "reject_missing_ohlc_next_open": true,
+    "min_days_to_expiry_entry": 5,
+    "tender_safety_exit_dte": 5,
+    "max_holding_period_days": 10,
+    "allow_overlapping_positions": false
+  },
+  "position_sizing": {
+    "cross_product_sizing": "integer_lot_lcm_matched",
+    "calendar_spread_sizing": "exact_1_to_1_lot",
+    "units": "matched_exposure_grams",
+    "max_matched_units_per_trade": 1
+  },
+  "portfolio_exposure_limits": {
+    "allow_shared_contract_overlap": false,
+    "max_concurrent_positions_per_contract": 1,
+    "max_gross_lots_per_contract": 10,
+    "max_net_lots_per_contract": 10,
+    "max_underlying_grams_per_contract": 1000,
+    "allow_multi_strategy_contract_sharing": false,
+    "allow_opposing_contract_positions": false,
+    "position_release_timing": "next_session_after_exit",
+    "tie_breaker_priority": "signal_strength_descending"
+  },
+  "walk_forward_splits": {
+    "split_type": "rolling_window",
+    "training_window_months": 6,
+    "test_window_months": 3,
+    "step_size_months": 3,
+    "min_training_days": 60,
+    "min_training_samples": 20,
+    "boundary_policy": "close_at_test_window_end"
+  },
+  "strategies": {
+    "strategy_a_cross_product": {
+      "strategy_name": "same_expiry_cross_product_convergence",
+      "candidate_type": "same_expiry_cross_product",
+      "signal_metric": "fine_price_spread_per_gram",
+      "signal_threshold_method": "training_percentile_or_cost_buffer",
+      "cost_buffer_multiplier": 1.25,
+      "training_upper_percentile": 80.0,
+      "training_lower_percentile": 20.0,
+      "exit_policy": "mean_reversion_or_holding_period",
+      "max_holding_period_days": 10,
+      "min_days_to_expiry": 5,
+      "description": "Convergence trading on fine gold price differences between different MCX gold contracts sharing the same observation date and expiry."
+    },
+    "strategy_b_calendar_spread": {
+      "strategy_name": "same_symbol_calendar_spread_roll",
+      "candidate_type": "same_symbol_calendar_spread",
+      "signal_metric": "fine_annualized_spread_pct",
+      "signal_threshold_method": "training_percentile",
+      "training_upper_percentile": 75.0,
+      "training_lower_percentile": 25.0,
+      "exit_policy": "roll_convergence_or_holding_period",
+      "max_holding_period_days": 10,
+      "min_days_to_expiry": 5,
+      "description": "Contango capture / calendar roll yield trading on adjacent expiries of the same MCX gold contract."
+    }
+  },
+  "cost_scenarios_to_evaluate": ["base", "low", "high"]
+}

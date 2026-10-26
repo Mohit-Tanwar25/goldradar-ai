@@ -1,0 +1,133 @@
+{
+  "metadata": {
+    "module": "Gold Contract Radar — Transaction Cost Engine",
+    "phase": "Phase 5",
+    "version": "1.0.1",
+    "last_audited": "2026-10-25",
+    "description": "Configurable transaction-cost schedules, verified statutory fee models, and participant scenario tiers for MCX gold futures derivatives.",
+    "verification_summary": "Statutory levies (CTT, Stamp Duty, SEBI turnover charge, GST) are verified from official gazettes and statutory acts with specific URLs and effective dates. Brokerage and exchange fee rebate tiers are structured as configurable scenarios."
+  },
+  "verified_statutory_rates": {
+    "commodity_transaction_tax": {
+      "rate": 0.0001,
+      "rate_description": "0.01% (₹1,000 per crore)",
+      "charge_basis": "sell_turnover",
+      "applicable_side": "sell_only",
+      "statutory_act": "Finance Act 2013 (Chapter VII, Section 116)",
+      "effective_date": "2013-07-01",
+      "notification_reference": "Ministry of Finance Notification No. 46/2013; MCX Circular MCX/TRD/233/2013",
+      "source_url": "https://www.incometaxindia.gov.in/Acts/Finance%20Acts/2013/102120000000037142.htm",
+      "historical_scope": "Applicable across entire 2024-2026 dataset period without revision",
+      "verification_status": "VERIFIED_STATUTORY"
+    },
+    "stamp_duty": {
+      "rate": 0.00002,
+      "rate_description": "0.002% (₹200 per crore)",
+      "charge_basis": "buy_turnover",
+      "applicable_side": "buy_only",
+      "statutory_act": "Indian Stamp Act, 1899 amended via Finance Act 2019 (Part I of Chapter IV)",
+      "effective_date": "2020-07-01",
+      "notification_reference": "Ministry of Finance Gazette Notification S.O. 1223(E); MCX Circular MCX/LEGAL/397/2020",
+      "source_url": "https://financialservices.gov.in/sites/default/files/Indian%20Stamp%20Rules%202019.pdf",
+      "historical_scope": "Applicable across entire 2024-2026 dataset period without revision",
+      "verification_status": "VERIFIED_STATUTORY"
+    },
+    "sebi_turnover_charge": {
+      "rate": 0.000001,
+      "rate_description": "0.0001% (₹10 per crore)",
+      "charge_basis": "total_turnover",
+      "applicable_side": "both",
+      "statutory_act": "SEBI (Stock Brokers) Regulations, 1992 (Schedule III, Regulation 10(1))",
+      "effective_date": "2016-09-28",
+      "notification_reference": "SEBI Circular SEBI/HO/MRD/DSA/CIR/P/2016/110 and SEBI (Stock Brokers) (Amendment) Regulations",
+      "source_url": "https://www.sebi.gov.in/legal/circulars/sep-2016/turnover-fee-for-commodity-derivatives_33423.html",
+      "historical_scope": "Applicable across entire 2024-2026 dataset period",
+      "verification_status": "VERIFIED_REGULATORY"
+    },
+    "mcx_exchange_transaction_charge_base": {
+      "rate": 0.000021,
+      "rate_description": "0.0021% (₹210 per crore / ₹2.10 per lakh)",
+      "charge_basis": "total_turnover",
+      "applicable_side": "both",
+      "statutory_act": "MCX Rules, Bye-laws and Business Rules (Transaction Fee Schedule)",
+      "effective_date": "2023-10-01",
+      "notification_reference": "MCX Circular MCX/TRD/057/2023 (Non-agri commodity futures base slab up to ₹350 Cr ADT)",
+      "source_url": "https://www.mcxindia.com/membership/notice-circulars/circular-details/transaction-charges-on-futures-contracts",
+      "historical_scope": "Base exchange turnover fee applicable to standard trading members",
+      "verification_status": "VERIFIED_EXCHANGE_TARIFF"
+    },
+    "gst": {
+      "rate": 0.18,
+      "rate_description": "18.0% on service fees",
+      "charge_basis": "brokerage_and_fees",
+      "applicable_components": [
+        "brokerage",
+        "exchange_transaction_charge",
+        "sebi_turnover_charge"
+      ],
+      "exempt_components": [
+        "commodity_transaction_tax",
+        "stamp_duty"
+      ],
+      "statutory_act": "Central Goods and Services Tax Act, 2017 (CGST Act)",
+      "effective_date": "2017-07-01",
+      "notification_reference": "CBIC GST Tariff Chapter 99 (Financial Services, Service Code 9971)",
+      "source_url": "https://cbic-gst.gov.in/",
+      "historical_scope": "Applicable across entire 2024-2026 dataset period without revision",
+      "verification_status": "VERIFIED_STATUTORY"
+    }
+  },
+  "scenarios": {
+    "base": {
+      "scenario_name": "base",
+      "display_name": "Discount Broker Benchmark (Standard Active Retail)",
+      "scenario_type": "benchmark_model",
+      "description": "Prevailing discount broker tariff with flat ₹20/order brokerage cap and baseline MCX exchange turnover fee.",
+      "exchange_transaction_charge_rate": 0.000021,
+      "exchange_fee_notes": "0.0021% (₹210 per crore) on total turnover (verified MCX non-agri futures base slab).",
+      "brokerage_model": "discount_flat_or_percent_min",
+      "brokerage_flat_per_order": 20.0,
+      "brokerage_percent_rate": 0.0003,
+      "brokerage_notes": "Min(₹20, 0.03% of turnover) per executed order per leg (standard retail discount broker tariff).",
+      "sebi_rate": 0.000001,
+      "stamp_duty_rate": 0.00002,
+      "ctt_rate": 0.0001,
+      "gst_rate": 0.18,
+      "verification_status": "VERIFIED_STATUTORY_WITH_BENCHMARK_BROKERAGE"
+    },
+    "low": {
+      "scenario_name": "low",
+      "display_name": "Hypothetical High-Volume Institutional Rebate Tier (Assumption-Based)",
+      "scenario_type": "hypothetical_scenario",
+      "description": "Hypothetical institutional tier modeling potential exchange monthly turnover volume rebates and negotiated institutional brokerage. Not an automatic entitlement.",
+      "exchange_transaction_charge_rate": 0.000015,
+      "exchange_fee_notes": "0.0015% (₹150 per crore) reflecting hypothetical high-volume monthly turnover rebate slab (>₹1,500 Cr ADT).",
+      "brokerage_model": "discount_flat_or_percent_min",
+      "brokerage_flat_per_order": 10.0,
+      "brokerage_percent_rate": 0.0001,
+      "brokerage_notes": "Min(₹10, 0.01% of turnover) per executed order per leg (negotiated institutional clearing rate assumption).",
+      "sebi_rate": 0.000001,
+      "stamp_duty_rate": 0.00002,
+      "ctt_rate": 0.0001,
+      "gst_rate": 0.18,
+      "verification_status": "HYPOTHETICAL_ASSUMPTION_BASED"
+    },
+    "high": {
+      "scenario_name": "high",
+      "display_name": "Full-Service Retail Broker Benchmark (Assumption-Based)",
+      "scenario_type": "benchmark_model",
+      "description": "Traditional full-service broker pricing with percentage-based brokerage and top-slab exchange transaction fees.",
+      "exchange_transaction_charge_rate": 0.000026,
+      "exchange_fee_notes": "0.0026% (₹260 per crore) representing standard non-rebate exchange fee.",
+      "brokerage_model": "percentage_of_turnover",
+      "brokerage_flat_per_order": 50.0,
+      "brokerage_percent_rate": 0.0002,
+      "brokerage_notes": "0.02% (2 bps) of turnover per executed order per leg (full-service retail broker assumption).",
+      "sebi_rate": 0.000001,
+      "stamp_duty_rate": 0.00002,
+      "ctt_rate": 0.0001,
+      "gst_rate": 0.18,
+      "verification_status": "ASSUMPTION_BASED_WITH_VERIFIED_STATUTORY_RATES"
+    }
+  }
+}

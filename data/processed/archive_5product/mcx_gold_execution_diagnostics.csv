@@ -1,0 +1,25 @@
+diagnostic_category,metric_name,count,description
+Eligibility & Screening,total_candidates_screened,27802,Total candidates evaluated in backtest
+Eligibility & Screening,candidates_in_test_windows,27802,Candidates occurring within test window boundaries
+Signal Triggers,signals_triggered,10479,Candidate observations exceeding training threshold
+Execution Feasibility,trades_filled,268,Trade attempts successfully filled at date t+1 Open on both legs
+Execution Feasibility,trades_completed,267,Trades held and exited cleanly at Open within evaluation rules
+Execution Feasibility,trades_unresolved,1,Trades marked unresolved due to unexecutable boundary exits
+Execution Rejections,rejected_existing_contract_position,9956,Rejections because a leg contract is already in an active portfolio position
+Execution Rejections,rejected_multi_strategy_contract_conflict,0,Rejections due to multi-strategy concurrent contract conflict
+Execution Rejections,rejected_opposing_contract_position,0,Rejections due to opposing simultaneous contract positions
+Execution Rejections,rejected_gross_exposure_limit,0,Rejections due to contract gross lot exposure limit breached
+Execution Rejections,rejected_net_exposure_limit,0,Rejections due to contract net lot exposure limit breached
+Execution Rejections,rejected_contract_gram_limit,0,Rejections due to contract underlying gram exposure limit breached
+Execution Rejections,rejected_existing_active_position,0,Legacy pair-level active position rejection counter
+Execution Rejections,rejected_insufficient_training_history,61,Rejections because product/pair has < 20 training samples in fold training window
+Execution Rejections,rejected_missing_next_session,0,Rejections due to missing next-session market record
+Execution Rejections,rejected_missing_next_open_leg_a,0,Rejections due to missing next-session Open price on Leg A
+Execution Rejections,rejected_missing_next_open_leg_b,0,Rejections due to missing next-session Open price on Leg B
+Execution Rejections,rejected_zero_volume_next_session_leg_a,0,Rejections due to zero traded volume on Leg A next session
+Execution Rejections,rejected_zero_volume_next_session_leg_b,0,Rejections due to zero traded volume on Leg B next session
+Execution Rejections,rejected_tender_window_at_entry,42,Rejections because contract already within 5-day tender window
+Execution Rejections,rejected_fold_boundary_censored,152,Rejections because planned entry falls on or after test window end
+Exit Mechanics,exits_due_to_max_holding,185,Exits triggered by reaching maximum 10-day holding period
+Exit Mechanics,exits_due_to_tender_safety,47,Exits triggered to avoid delivery tender notice period (DTE <= 5)
+Exit Mechanics,exits_due_to_fold_boundary,36,Exits triggered by test window fold boundary termination

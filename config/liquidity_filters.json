@@ -1,0 +1,62 @@
+{
+  "metadata": {
+    "module": "Gold Contract Radar — Liquidity Filters",
+    "phase": "Phase 5",
+    "version": "1.0.0",
+    "created_date": "2026-10-24",
+    "description": "Configurable screening thresholds for trading activity, open interest, and contract maturity.",
+    "methodology_notes": "Thresholds are derived from empirical distribution analysis of MCX gold contracts (2024-01-01 to 2026-10-22). Per-symbol thresholds account for structural contract size variations (1g micro to 1kg standard)."
+  },
+  "global_defaults": {
+    "min_days_to_expiry": 5,
+    "min_volume_lots": 10,
+    "min_open_interest_lots": 25,
+    "require_both_executable": true,
+    "enable_per_symbol_overrides": true,
+    "enable_expiry_filter": true,
+    "enable_volume_filter": true,
+    "enable_open_interest_filter": true
+  },
+  "symbol_overrides": {
+    "GOLD": {
+      "display_name": "Gold Standard (1 kg / 1000g)",
+      "lot_size_grams": 1000,
+      "min_days_to_expiry": 5,
+      "min_volume_lots": 10,
+      "min_open_interest_lots": 25,
+      "rationale": "1 lot = 1kg (~₹70L notional). Traded P10=4 lots, P25=41 lots, Median=717 lots. 10 lots represents ₹7 Cr daily turnover."
+    },
+    "GOLDM": {
+      "display_name": "Gold Mini (100g)",
+      "lot_size_grams": 100,
+      "min_days_to_expiry": 5,
+      "min_volume_lots": 25,
+      "min_open_interest_lots": 50,
+      "rationale": "1 lot = 100g (~₹7L notional). Traded P10=160 lots, P25=681 lots, Median=4,292 lots. High liquidity."
+    },
+    "GOLDGUINEA": {
+      "display_name": "Gold Guinea (8g)",
+      "lot_size_grams": 8,
+      "min_days_to_expiry": 5,
+      "min_volume_lots": 10,
+      "min_open_interest_lots": 25,
+      "rationale": "1 lot = 8g (~₹56k notional). Traded P10=26 lots, P25=169 lots, Median=932 lots."
+    },
+    "GOLDPETAL": {
+      "display_name": "Gold Petal (1g)",
+      "lot_size_grams": 1,
+      "min_days_to_expiry": 5,
+      "min_volume_lots": 50,
+      "min_open_interest_lots": 100,
+      "rationale": "1 lot = 1g (~₹7k notional). Micro contract with massive lot volume (Traded P10=555, P25=2880, Median=12811)."
+    },
+    "GOLDTEN": {
+      "display_name": "Gold Ten (10g)",
+      "lot_size_grams": 10,
+      "min_days_to_expiry": 5,
+      "min_volume_lots": 25,
+      "min_open_interest_lots": 50,
+      "rationale": "1 lot = 10g (~₹70k notional). Launched March 2025. Traded P10=152 lots, P25=620 lots, Median=3048 lots."
+    }
+  }
+}
