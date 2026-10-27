@@ -7,11 +7,22 @@ import {
   MethodologyResponse,
 } from "@/types/api";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+function getCleanBaseUrl(): string {
+  const raw = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000")
+    .trim()
+    .replace(/\/+$/, "");
+  // If the user appended /api to the base URL, strip it to prevent /api/api/...
+  if (/\/+api$/i.test(raw)) {
+    return raw.replace(/\/+api$/i, "");
+  }
+  return raw;
+}
+
+const API_BASE_URL = getCleanBaseUrl();
 
 async function fetchJson<T>(endpoint: string): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const url = `${API_BASE_URL}${cleanEndpoint}`;
   try {
     const res = await fetch(url, {
       headers: {

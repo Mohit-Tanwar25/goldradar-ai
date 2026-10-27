@@ -78,7 +78,11 @@ def _get_contract_spec(sym: str, specs_cfg: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-@app.get("/api/health")
+@app.get('/')
+@app.get('/api')
+@app.get('/api/health')
+@app.get('/api/api/health')
+@app.get('/health')
 def health_check():
     return {
         "status": "healthy",
@@ -91,7 +95,9 @@ def health_check():
 # =====================================================================
 # 1. OVERVIEW ENDPOINT
 # =====================================================================
-@app.get("/api/overview")
+@app.get('/api/overview')
+@app.get('/api/api/overview')
+@app.get('/overview')
 def get_overview():
     norm_df = data_service.get_normalized_data()
     summary_df = data_service.get_backtest_summary()
@@ -250,7 +256,9 @@ def get_overview():
 # =====================================================================
 # 2. COMPARE CONTRACTS ENDPOINT
 # =====================================================================
-@app.get("/api/contracts/compare")
+@app.get('/api/contracts/compare')
+@app.get('/api/api/contracts/compare')
+@app.get('/contracts/compare')
 def compare_contracts(
     symbol_a: str = Query("GOLDM", pattern="^(GOLDM|GOLDTEN|GOLDGUINEA|GOLDPETAL)$"),
     symbol_b: str = Query("GOLDTEN", pattern="^(GOLDM|GOLDTEN|GOLDGUINEA|GOLDPETAL)$"),
@@ -425,7 +433,9 @@ def compare_contracts(
 # =====================================================================
 # 3. FUTURES CURVE ENDPOINT
 # =====================================================================
-@app.get("/api/futures/curve")
+@app.get('/api/futures/curve')
+@app.get('/api/api/futures/curve')
+@app.get('/futures/curve')
 def get_futures_curve(
     snapshot_date: Optional[str] = Query(None)
 ):
@@ -500,7 +510,9 @@ def get_futures_curve(
 # =====================================================================
 # 4. OPPORTUNITIES & COSTS ENDPOINT
 # =====================================================================
-@app.get("/api/opportunities")
+@app.get('/api/opportunities')
+@app.get('/api/api/opportunities')
+@app.get('/opportunities')
 def get_opportunities(
     cost_scenario: str = Query("base", pattern="^(base|low|high)$"),
     symbol_filter: Optional[str] = Query("ALL"),
@@ -609,7 +621,9 @@ def get_opportunities(
 # =====================================================================
 # 5. BACKTEST PERFORMANCE ENDPOINT
 # =====================================================================
-@app.get("/api/backtest")
+@app.get('/api/backtest')
+@app.get('/api/api/backtest')
+@app.get('/backtest')
 def get_backtest_performance(
     cost_scenario: str = Query("base", pattern="^(base|low|high)$"),
     strategy_name: Optional[str] = Query("All Strategies"),
@@ -738,7 +752,9 @@ def get_backtest_performance(
 # =====================================================================
 # 6. DATA & METHODOLOGY ENDPOINT
 # =====================================================================
-@app.get("/api/methodology")
+@app.get('/api/methodology')
+@app.get('/api/api/methodology')
+@app.get('/methodology')
 def get_methodology():
     specs_cfg = data_service.get_contract_specs()
     bt_cfg = data_service.get_backtest_config()
@@ -784,3 +800,4 @@ def get_methodology():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("api.main:app", host="127.0.0.1", port=8000, reload=True)
+
