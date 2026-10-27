@@ -1,7 +1,7 @@
 """
 Gold Contract Radar — MCX Commodity Derivatives Intelligence
 Phase 7: Interactive Financial Research Dashboard
-Streamlit Application Entry Point
+Streamlit Application Entry Point — Modern Editorial Financial Interface
 """
 
 import sys
@@ -44,49 +44,61 @@ from src.dashboard.views import (
 
 # 1. Page Configuration
 st.set_page_config(
-    page_title="Gold Contract Radar — MCX Commodity Derivatives Intelligence",
+    page_title="Gold Contract Radar — MCX Derivatives Intelligence",
     page_icon="🪙",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# 2. Inject Polished CSS
+# 2. Inject Editorial Custom Styling
 inject_custom_css()
 
 # 3. Sidebar Navigation & Branding
 st.sidebar.markdown("""
-<div style="text-align: center; padding: 10px 0 20px 0;">
-    <h2 style="color: #D4AF37; margin: 0; font-size: 1.5rem; letter-spacing: 0.05em;">🪙 GOLD RADAR</h2>
-    <p style="color: #8B949E; font-size: 0.75rem; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em;">
-        MCX Derivatives Intelligence
-    </p>
+<div style="padding: 12px 0 18px 0; border-bottom: 1px solid #E7E9ED; margin-bottom: 16px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.35rem;">🪙</span>
+        <div>
+            <div style="font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em; color: #16181D; line-height: 1.2;">
+                GOLD CONTRACT RADAR
+            </div>
+            <div style="font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: #B89137; font-weight: 600;">
+                MCX Derivatives Intelligence
+            </div>
+        </div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
 nav_options = [
-    "🏠 1. Overview",
-    "🔍 2. Compare Contracts",
-    "📈 3. Futures Curve",
-    "⚡ 4. Opportunities & Costs",
-    "🧪 5. Backtest Performance",
-    "📚 6. Data & Methodology"
+    "🏠 Overview",
+    "🔍 Compare Contracts",
+    "📈 Futures Curve",
+    "⚡ Opportunities & Costs",
+    "🧪 Backtest Performance",
+    "📚 Data & Methodology"
 ]
 
-selected_page = st.sidebar.radio("Navigation Menu", nav_options, index=0)
+selected_page = st.sidebar.radio("Navigation Menu", nav_options, index=0, label_visibility="collapsed")
 
-st.sidebar.markdown("---")
 st.sidebar.markdown("""
-<div style="font-size: 0.75rem; color: #78909C; line-height: 1.6;">
-    <b>Event:</b> Hack in Hills '26<br>
+<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #E7E9ED; font-size: 0.74rem; color: #727985; line-height: 1.6;">
+    <div style="font-weight: 600; color: #16181D; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.7rem;">
+        Market Coverage
+    </div>
     <b>Exchange:</b> MCX India (Gold)<br>
     <b>Coverage:</b> 2024–2026 (701 sessions)<br>
-    <b>Active Universe:</b> 4 Contracts (GOLDM, GOLDTEN, GOLDGUINEA, GOLDPETAL)<br>
-    <b>Excluded:</b> GOLD (1kg Standard Bullion)<br>
-    <b>Audit Status:</b> <span style="color: #00E676; font-weight:600;">Active Universe Verified</span>
+    <b>Active Universe:</b> 4 Contracts<br>
+    <span style="font-size: 0.7rem; color: #9CA3AF;">(GOLDM, GOLDTEN, GOLDGUINEA, GOLDPETAL)</span><br>
+    <b>Excluded:</b> 1kg Wholesale Bullion<br>
+    <b>Status:</b> <span style="color: #0D8244; font-weight: 600;">Active Universe Verified</span><br>
+    <b>Event:</b> Hack in Hills '26
 </div>
 """, unsafe_allow_html=True)
 
-if st.sidebar.button("🔄 Refresh Application Data", use_container_width=True):
+st.sidebar.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
+
+if st.sidebar.button("🔄 Refresh Application Data", width="stretch"):
     st.cache_data.clear()
     st.rerun()
 
@@ -115,16 +127,15 @@ except Exception as e:
     st.stop()
 
 # 5. Route Page Views
-if selected_page == "🏠 1. Overview":
+if selected_page == "🏠 Overview":
     render_page_overview(norm_df, summary_df, diag_df, elig_df, trades_df, radar_df)
-elif selected_page == "🔍 2. Compare Contracts":
+elif selected_page == "🔍 Compare Contracts":
     render_page_compare_contracts(norm_df, radar_df, specs_cfg)
-elif selected_page == "📈 3. Futures Curve":
+elif selected_page == "📈 Futures Curve":
     render_page_futures_curve(snapshots_df, term_df, specs_cfg)
-elif selected_page == "⚡ 4. Opportunities & Costs":
+elif selected_page == "⚡ Opportunities & Costs":
     render_page_opportunities_costs(liq_df, costs_df, elig_df, radar_df)
-elif selected_page == "🧪 5. Backtest Performance":
+elif selected_page == "🧪 Backtest Performance":
     render_page_backtest(trades_df, metrics_df, summary_df, diag_df, bt_cfg)
-elif selected_page == "📚 6. Data & Methodology":
+elif selected_page == "📚 Data & Methodology":
     render_page_methodology(specs_cfg, bt_cfg, costs_cfg, liq_cfg)
-

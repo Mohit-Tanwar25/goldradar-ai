@@ -20,7 +20,7 @@ if SRC_DIR not in sys.path:
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from dashboard.data_loader import (
+from src.dashboard.data_loader import (
     load_contract_specs,
     load_backtest_config,
     load_transaction_costs_config,
@@ -31,7 +31,7 @@ from dashboard.data_loader import (
     load_execution_diagnostics,
     _safe_load_csv
 )
-from dashboard.metrics import (
+from src.dashboard.metrics import (
     filter_trades,
     calculate_trade_kpis,
     build_cumulative_equity_series,

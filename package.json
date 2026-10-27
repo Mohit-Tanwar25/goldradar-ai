@@ -1,0 +1,13 @@
+{
+  "name": "goldradar-ai",
+  "version": "2.0.0",
+  "description": "Gold Contract Radar — MCX Commodity Derivatives Intelligence",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend start",
+    "api": ".venv\\Scripts\\uvicorn api.main:app --host 127.0.0.1 --port 8000 --reload",
+    "dev:all": "python run.py"
+  }
+}

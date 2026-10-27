@@ -1,9 +1,26 @@
 services:
+  # 1. FastAPI Python Analytics Backend
   - type: web
-    name: gold-contract-radar
+    name: goldradar-api
     runtime: python
+    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.address 0.0.0.0 --server.port $PORT
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.1
+
+  # 2. Next.js Single Dashboard Frontend
+  - type: web
+    name: goldradar-frontend
+    runtime: node
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.10.0
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+
