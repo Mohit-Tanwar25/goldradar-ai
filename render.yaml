@@ -2,6 +2,7 @@ services:
   # 1. FastAPI Python Analytics Backend
   - type: web
     name: goldradar-api
+    region: singapore
     runtime: python
     plan: free
     rootDir: backend
@@ -14,6 +15,7 @@ services:
   # 2. Next.js Single Dashboard Frontend
   - type: web
     name: goldradar-ai
+    region: singapore
     runtime: node
     plan: free
     rootDir: frontend
