@@ -78,11 +78,11 @@ def _get_contract_spec(sym: str, specs_cfg: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-@app.get('/')
-@app.get('/api')
-@app.get('/api/health')
-@app.get('/api/api/health')
-@app.get('/health')
+@app.api_route('/', methods=['GET', 'HEAD'])
+@app.api_route('/api', methods=['GET', 'HEAD'])
+@app.api_route('/api/health', methods=['GET', 'HEAD'])
+@app.api_route('/api/api/health', methods=['GET', 'HEAD'])
+@app.api_route('/health', methods=['GET', 'HEAD'])
 def health_check():
     return {
         "status": "healthy",
