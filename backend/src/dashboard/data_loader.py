@@ -1,22 +1,40 @@
 """
 Gold Contract Radar — MCX Commodity Derivatives Intelligence
-Data Loading, Caching, and Validation Module for Streamlit Dashboard
+Data Loading, Caching, and Validation Module
 """
 
 import os
 import json
+from functools import wraps
 from typing import Dict, Any, Optional, Tuple, List
 import pandas as pd
 import numpy as np
-import streamlit as st
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_DIR = os.path.join(PROJECT_ROOT, "data", "processed")
 CONFIG_DIR = os.path.join(PROJECT_ROOT, "config")
 
+
+def cache_data(fn):
+    """Lightweight in-memory data cache replacing Streamlit's cache_data."""
+    _cache = {}
+
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        key = (args, tuple(sorted(kwargs.items())))
+        if key not in _cache:
+            _cache[key] = fn(*args, **kwargs)
+        val = _cache[key]
+        if isinstance(val, pd.DataFrame):
+            return val.copy()
+        return val
+
+    return wrapper
+
+
 # --- Configuration Loaders ---
 
-@st.cache_data(show_spinner=False)
+@cache_data
 def load_contract_specs(config_dir: str = CONFIG_DIR) -> Dict[str, Any]:
     """Load MCX gold contract specifications configuration."""
     p = os.path.join(config_dir, "contract_specs.json")
@@ -25,7 +43,8 @@ def load_contract_specs(config_dir: str = CONFIG_DIR) -> Dict[str, Any]:
     with open(p, "r", encoding="utf-8") as f:
         return json.load(f)
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_backtest_config(config_dir: str = CONFIG_DIR) -> Dict[str, Any]:
     """Load walk-forward backtest configuration."""
     p = os.path.join(config_dir, "backtest_config.json")
@@ -34,7 +53,8 @@ def load_backtest_config(config_dir: str = CONFIG_DIR) -> Dict[str, Any]:
     with open(p, "r", encoding="utf-8") as f:
         return json.load(f)
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_transaction_costs_config(config_dir: str = CONFIG_DIR) -> Dict[str, Any]:
     """Load transaction cost scenarios configuration."""
     p = os.path.join(config_dir, "transaction_costs.json")
@@ -43,7 +63,8 @@ def load_transaction_costs_config(config_dir: str = CONFIG_DIR) -> Dict[str, Any
     with open(p, "r", encoding="utf-8") as f:
         return json.load(f)
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_liquidity_filters_config(config_dir: str = CONFIG_DIR) -> Dict[str, Any]:
     """Load liquidity filter parameters configuration."""
     p = os.path.join(config_dir, "liquidity_filters.json")
@@ -51,6 +72,7 @@ def load_liquidity_filters_config(config_dir: str = CONFIG_DIR) -> Dict[str, Any
         raise FileNotFoundError(f"Missing required config file: {p}")
     with open(p, "r", encoding="utf-8") as f:
         return json.load(f)
+
 
 # --- Dataset Loaders with Validation ---
 
@@ -76,7 +98,8 @@ def _safe_load_csv(filename: str, required_cols: Optional[List[str]] = None, par
                 
     return df.copy()
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_normalized_data() -> pd.DataFrame:
     """Load Phase 3 normalized market data."""
     req = ['date', 'symbol', 'expiry_date', 'contract_key', 'open', 'high', 'low', 'close',
@@ -89,7 +112,8 @@ def load_normalized_data() -> pd.DataFrame:
         df['days_to_expiry'] = (df['expiry_date'] - df['date']).dt.days
     return df
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_relative_price_radar() -> pd.DataFrame:
     """Load Phase 4 relative price radar cross-product dataset."""
     req = ['date', 'pair_type', 'symbol_a', 'symbol_b', 'expiry_a',
@@ -115,7 +139,8 @@ def load_relative_price_radar() -> pd.DataFrame:
         
     return df
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_term_structure() -> pd.DataFrame:
     """Load Phase 4 term structure and calendar spreads dataset."""
     req = ['date', 'symbol', 'nearer_expiry', 'deferred_expiry',
@@ -139,7 +164,8 @@ def load_term_structure() -> pd.DataFrame:
         )
     return df
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_term_structure_snapshots() -> pd.DataFrame:
     """Load Phase 4 term structure snapshots dataset."""
     req = ['date', 'symbol', 'expiry_date', 'days_to_expiry', 'close_fine_per_gram']
@@ -155,7 +181,8 @@ def load_term_structure_snapshots() -> pd.DataFrame:
         
     return df
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_liquidity_filtered_candidates() -> pd.DataFrame:
     """Load Phase 5 liquidity-filtered candidates dataset."""
     req = ['candidate_id', 'candidate_type', 'date', 'symbol_leg_a', 'symbol_leg_b',
@@ -164,7 +191,8 @@ def load_liquidity_filtered_candidates() -> pd.DataFrame:
     df['date'] = pd.to_datetime(df['date'])
     return df
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_transaction_cost_scenarios() -> pd.DataFrame:
     """Load Phase 5 transaction cost scenarios dataset."""
     req = ['candidate_id', 'candidate_type', 'scenario_name', 'matched_lots_leg_a',
@@ -173,7 +201,8 @@ def load_transaction_cost_scenarios() -> pd.DataFrame:
            'quantity_matching_status', 'cost_model_status']
     return _safe_load_csv("mcx_gold_transaction_cost_scenarios.csv", required_cols=req)
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_eligible_candidates() -> pd.DataFrame:
     """Load Phase 5 fully eligible candidates dataset."""
     req = ['candidate_id', 'candidate_type', 'date', 'symbol_leg_a', 'symbol_leg_b',
@@ -183,7 +212,8 @@ def load_eligible_candidates() -> pd.DataFrame:
     df['date'] = pd.to_datetime(df['date'])
     return df
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_backtest_trades() -> pd.DataFrame:
     """Load Phase 6 simulated trades ledger."""
     req = ['trade_id', 'candidate_id', 'strategy_name', 'signal_date', 'entry_date',
@@ -196,7 +226,8 @@ def load_backtest_trades() -> pd.DataFrame:
     df['exit_date'] = pd.to_datetime(df['exit_date'])
     return df
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_walk_forward_metrics() -> pd.DataFrame:
     """Load Phase 6 walk-forward fold metrics."""
     req = ['fold_id', 'strategy_name', 'cost_scenario', 'train_start_date', 'train_end_date',
@@ -206,7 +237,8 @@ def load_walk_forward_metrics() -> pd.DataFrame:
            'realized_max_drawdown_inr', 'mean_holding_days']
     return _safe_load_csv("mcx_gold_walk_forward_metrics.csv", required_cols=req)
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_backtest_summary() -> pd.DataFrame:
     """Load Phase 6 strategy summary performance metrics."""
     req = ['strategy_name', 'cost_scenario', 'total_trade_attempts', 'completed_trades',
@@ -215,11 +247,13 @@ def load_backtest_summary() -> pd.DataFrame:
            'realized_max_drawdown_inr', 'mean_holding_days']
     return _safe_load_csv("mcx_gold_backtest_summary.csv", required_cols=req)
 
-@st.cache_data(show_spinner=False)
+
+@cache_data
 def load_execution_diagnostics() -> pd.DataFrame:
     """Load Phase 6 execution diagnostics breakdown."""
     req = ['diagnostic_category', 'metric_name', 'count', 'description']
     return _safe_load_csv("mcx_gold_execution_diagnostics.csv", required_cols=req)
+
 
 def get_dataset_inventory() -> List[Dict[str, Any]]:
     """Return status inventory for all 12 Phase 1-6 production datasets."""

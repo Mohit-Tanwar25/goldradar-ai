@@ -6,7 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg?logo=python)](https://www.python.org/downloads/)
-[![Tests Passing](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
+[![Tests Passing](https://img.shields.io/badge/tests-72%2F72%20passing-brightgreen.svg)](backend/tests/)
 
 **Asset Class:** Multi-Contract Gold Futures Derivatives (Multi Commodity Exchange of India — MCX)  
 **Active Universe:** 4 Retail/Mini MCX Gold Contracts (`GOLDM`, `GOLDTEN`, `GOLDGUINEA`, `GOLDPETAL`)  
@@ -16,85 +16,111 @@
 
 ## 1. Project Overview & Architecture
 
-**Gold Contract Radar** is a quantitative research workstation and financial analytics dashboard engineered for Indian gold commodity derivatives. It normalizes distinct contract purities and lot sizes to a common 999 fine-gold benchmark (₹/gram), tracks relative-value spreads, models statutory friction, and evaluates walk-forward backtest simulations.
+**Gold Contract Radar** is a quantitative research workstation and financial analytics platform engineered for Indian gold commodity derivatives. It normalizes distinct contract purities and lot sizes to a common 999 fine-gold benchmark (₹/gram), tracks relative-value spreads, models statutory friction, and evaluates walk-forward backtest simulations.
 
-The application is structured as a clean, decoupled monorepo:
+The project is structured as a decoupled, high-performance monorepo:
 
-- **`/frontend`**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Lucide Icons, and Recharts.
-- **`/backend`**: Python FastAPI REST service, Pandas/NumPy analytics engine, MCX contract specs, and canonical datasets.
+- **`/frontend`**: Modern Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Lucide Icons, and Recharts. Contains the complete user interface, custom data uploader, and interactive quote simulator.
+- **`/backend`**: Lean Python FastAPI REST service, Pandas/NumPy analytics engine, MCX contract specifications, and authoritative processed datasets.
 
-### Minimalist Financial Design
-- **Content-Driven:** Pure white content cards on a subtle `#F7F8FA` background with clean `#E7E9ED` dividers and dark typography (`#17191D`).
-- **Subtle Gold Accents:** `#B89137` accents for key active indicators and benchmarks.
-- **Zero Decorative Clutter:** No multi-page navigation menus, redundant banners, or excessive boxes. Everything is accessible from a single viewport scroll.
+```
+goldradar-ai/
+├── backend/
+│   ├── api/                     # FastAPI app & endpoints (data_service.py, main.py)
+│   ├── config/                  # Contract specs, cost schedules, liquidity configs
+│   ├── data/
+│   │   └── processed/           # 12 canonical production CSV datasets (~98 MB)
+│   ├── src/                     # Core math, normalization, radar, & backtesting logic
+│   ├── tests/                   # 7 test suites (72 unit & regression tests)
+│   └── requirements.txt         # Lean production dependencies (no Streamlit/Plotly)
+├── frontend/
+│   ├── src/
+│   │   ├── app/                 # Next.js App Router (layout.tsx, page.tsx, globals.css)
+│   │   ├── components/          # Recharts visualizations, single dashboard, & views
+│   │   ├── lib/                 # Type-safe API client & formatting utilities
+│   │   └── types/               # TypeScript interfaces matching backend models
+│   ├── package.json
+│   ├── next.config.ts
+│   └── tsconfig.json
+├── package.json                 # Monorepo root scripts
+├── render.yaml                  # Production blueprint for Render cloud deployment
+├── run.py                       # Unified local development launcher
+├── run.bat                      # 1-click Windows runner
+└── README.md
+```
+
+### Lightweight & Optimized Deployment
+- **Zero Legacy Bloat:** All legacy prototypes (Streamlit UI, redundant scratch scripts, raw scrape files) have been removed.
+- **Fast Build Times:** Lightweight backend dependencies allow sub-minute installations on free-tier container platforms like Render and Vercel.
+- **Pure Web Dashboard:** The entire UI is 100% Next.js + React.
 
 ---
 
-## 2. Dashboard Sections
+## 2. Dashboard Features & Analytical Workflow
 
-The single dashboard provides an end-to-end analytical workflow:
+The single-page dashboard organizes the complete analytical pipeline into an accessible viewport scroll:
 
 ```
 [ A. Compact Header ]
          │
 [ B. Market Overview (4 Key Parity KPIs) ]
          │
-[ C. Opportunity Radar (Screened Pairs + CSV Export) ] ──▶ [ D. Opportunity Evaluation Card ]
+[ C. Interactive MCX Simulator & CSV File Uploader ]
          │
-[ E. Contract Comparison (4 Contract Specs + Pair Selector) ]
+[ D. Opportunity Radar (Screened Pairs + CSV Export) ] ──▶ [ E. Opportunity Detail Card ]
          │
-[ F. Market Analytics (Price History | Relative Spread | Futures Curve) ]
+[ F. Contract Comparison (4 Contract Specs + Pair Selector) ]
          │
-[ G. Strategy Performance Summary (Equity Curve & Breakdown) ]
+[ G. Market Analytics (Price History | Relative Spread | Futures Curve) ]
+         │
+[ H. Strategy Performance Summary (Walk-Forward Equity Curve & Breakdown) ]
 ```
 
-### A. Compact Header
-- **Page Title:** Gold Market Dashboard with gold `Au` emblem.
-- **Data Status:** Real-time indicator confirming verified EOD settlement data from the backend.
-- **Active Refresh:** Single-click re-querying and synchronizing the dashboard with backend data.
+### A. Header & Market Synchronization
+- **Data Status Badge:** Confirms verified settlement data loaded from the backend.
+- **Active Refresh:** Single-click synchronization to re-query the latest market metrics.
 
-### B. Market Overview
-Four compact top-level metrics normalized to ₹/gram (999 pure fine gold):
+### B. Market Overview KPIs
+Four top-level metrics normalized to ₹/gram (999 pure fine gold):
 - **Normalized Gold Price:** Prompt contract benchmark rate in ₹/g.
-- **Market Structure:** Calculated regime across maturities (Contango, Backwardation, or Neutral).
+- **Market Structure:** Regime across maturities (Contango, Backwardation, or Neutral).
 - **Active Contracts:** Number of active MCX gold instruments tracked (4).
-- **Eligible Research Opportunities:** Count of contract pairs currently clearing modeled transaction cost hurdles.
+- **Eligible Research Opportunities:** Count of contract pairs clearing statutory transaction cost hurdles.
 
-### Interactive MCX Custom Inspector & CSV File Upload
+### C. Interactive MCX Custom Inspector & CSV Uploader
 Allows users and evaluators to interactively simulate quotes or upload custom datasets:
-- **Live Quote Simulator:** Enter custom prices for any two MCX contracts (`GOLDM`, `GOLDTEN`, `GOLDGUINEA`, `GOLDPETAL`) to see real-time normalized fine prices, gross spread, itemized statutory friction (CTT, Stamp Duty, Exchange fees, SEBI, GST, Slippage), and MCX parity verdict.
+- **Live Quote Simulator:** Enter custom prices for any two MCX contracts (`GOLDM`, `GOLDTEN`, `GOLDGUINEA`, `GOLDPETAL`) to view real-time normalized fine prices, gross spread, itemized statutory friction (CTT, Stamp Duty, Exchange fees, SEBI, GST, Slippage), and an instant parity verdict.
 - **CSV / Bhavcopy File Upload:** Drag-and-drop custom `.csv` files to batch-normalize prices to fine gold and generate a pairwise relative-spread matrix.
-- **Quick Test Buttons:** Includes **"Load Sample MCX Quotes"** for 1-click testing and **"Download Template (.csv)"** for custom data preparation.
+- **Quick Test Buttons:** Includes **"Load Sample MCX Quotes"** for 1-click testing and **"Download Template (.csv)"** for easy formatting.
 
-### C. Opportunity Radar & One-Click CSV Export
-The primary research screen evaluating cross-contract relative-value differences:
-- **Filters:** Interactive toggle between friction scenarios (`Base Case`, `Low Cost`, `High Cost`) and contract symbol filters.
-- **Cost Schedule Drawer:** Expandable breakdown of statutory taxes (CTT, Stamp Duty, GST, Exchange & SEBI fees, slippage bps).
+### D. Opportunity Radar & One-Click CSV Export
+The primary relative-value research table:
+- **Scenario Toggle:** Switch between friction scenarios (`Base Case`, `Low Cost`, `High Cost`).
+- **Cost Schedule Drawer:** View the exact tax breakdown (CTT, Stamp Duty, GST, Exchange & SEBI fees, slippage bps).
 - **Opportunity Table:** Displays contract pair, status badge (`Potential opportunity`, `Waiting for trigger`, `Not currently eligible`), gross spread, modeled round-trip friction, and color-coded **Net Spread (₹/g)** pill.
-- **Export to CSV:** Direct browser download of screened opportunities into a `.csv` file for external analysis.
+- **Export to CSV:** Direct browser download of screened opportunities into a `.csv` file.
 
-### D. Opportunity Evaluation & Plot Shortcut
+### E. Opportunity Detail & Chart Shortcut
 Selecting any candidate pair opens an inline inspection card:
 - Displays fine spread, statistical z-score ($\sigma$), and modeled net edge.
 - **Execution & Expiry Constraints:** Detailed leg specifications, days to expiry (DTE), and fill conventions.
-- **"Plot in Spread / Futures Curve" Action:** Smoothly scrolls and automatically focuses the interactive analytics chart on the selected pair.
+- **"Plot in Spread / Futures Curve" Action:** Smoothly scrolls and automatically focuses the analytics chart on the selected pair.
 
-### E. Contract Comparison
+### F. Contract Comparison
 Side-by-side specification cards for the 4 active MCX contracts:
 - **`GOLDM`** (100g, 995 fineness)
 - **`GOLDTEN`** (10g, 999 fineness)
 - **`GOLDGUINEA`** (8g sovereign, 916 / 22K fineness)
 - **`GOLDPETAL`** (1g, 999 fineness)
-- Displays trading unit, quotation basis, underlying fineness, and normalized ₹/g price.
 - Interactive **Leg A / Leg B** selector with an instant swap button to update the spread charts below.
 
-### F. Market Analytics & Multi-View Charts
-Interactive chart with a compact view switcher:
+### G. Market Analytics & Multi-View Charts
+Interactive chart with a view switcher:
 - **Historical Price Trend:** Multi-line normalized fine-gold price trajectory across all active contracts.
-- **Relative Spread:** Interactive timeseries showing spread dynamics with 30-day moving average and $\pm 2\sigma$ volatility bands.
+- **Relative Spread:** Interactive timeseries showing spread dynamics with a 30-day moving average and $\pm 2\sigma$ volatility bands.
 - **Futures Curve:** Forward term structure plotting fine-gold price against days to expiry with an interactive snapshot date picker.
 
-### G. Strategy Performance Summary
+### H. Strategy Performance Summary
 Historical walk-forward backtest evaluation:
 - Summary metrics: Net P&L after modeled costs, Win Rate %, Maximum Drawdown, and Completed Trades.
 - Multi-strategy performance breakdown table (`Spread Convergence` vs. `Calendar Spread Roll`).
@@ -110,7 +136,7 @@ Historical walk-forward backtest evaluation:
 | **Charts** | Recharts 3.x (Clean Minimalist Financial Theme) |
 | **Backend API** | Python 3.10+, FastAPI, Uvicorn, Pydantic |
 | **Data Engine** | Pandas, NumPy, python-dateutil |
-| **Testing** | Python `unittest` |
+| **Testing** | Python `unittest` (72 verified tests) |
 | **Deployment** | Render (`render.yaml` Blueprint) |
 
 ---
@@ -151,8 +177,8 @@ npm install
 cd ..
 ```
 
-### Step 4: Run Application (Unified Runner)
-You can start both the FastAPI backend and Next.js frontend concurrently with a single command from the project root:
+### Step 4: Run Application (Unified Launcher)
+Start both the FastAPI backend and Next.js frontend concurrently with a single command from the project root:
 
 ```bash
 python run.py
@@ -169,16 +195,16 @@ python run.py
 
 The repository includes a ready-to-use [`render.yaml`](render.yaml) Blueprint that automatically provisions both the Python backend and Next.js frontend.
 
-### Option A: One-Click Deploy via Render Blueprint (Recommended)
+### Option A: Deploy via Render Blueprint (Recommended)
 1. Go to [dashboard.render.com](https://dashboard.render.com) $\rightarrow$ **New +** $\rightarrow$ **Blueprint**.
 2. Connect your GitHub repository `Mohit-Tanwar25/goldradar-ai`.
-3. Render automatically discovers both services:
+3. Render automatically provisions both services:
    - `goldradar-api` (FastAPI backend)
    - `goldradar-frontend` (Next.js frontend)
 4. Click **Apply**.
 5. Once `goldradar-api` is deployed, set `NEXT_PUBLIC_API_URL` in `goldradar-frontend` environment variables to your backend URL (e.g. `https://goldradar-api.onrender.com`).
 
-### Option B: Manual Service Setup
+### Option B: Manual Service Configuration
 If creating services manually in the Render dashboard:
 
 1. **Backend Web Service:**
@@ -204,9 +230,10 @@ If creating services manually in the Render dashboard:
 Run the complete backend test suite:
 ```bash
 cd backend
-python -m unittest tests/test_dashboard.py tests/test_independent_audit_reconciliation.py
+python -m unittest tests/test_dashboard.py tests/test_independent_audit_reconciliation.py tests/test_normalization.py tests/test_relative_price_radar.py tests/test_liquidity_cost_filters.py
 cd ..
 ```
+*Expected: 72 tests passing with zero errors or warnings.*
 
 Run frontend TypeScript and production build checks:
 ```bash
@@ -217,7 +244,7 @@ npm run build
 
 ---
 
-## 7. Data Sources & Limitations
+## 7. Data Sources & Methodology
 
 - **Source:** Historical official Bhavcopy settlement data from the **Multi Commodity Exchange of India (MCX)** ([mcxindia.com](https://www.mcxindia.com/market-data/bhavcopy)) covering Jan 2024 – Oct 2026.
 - **Normalization Formula:**

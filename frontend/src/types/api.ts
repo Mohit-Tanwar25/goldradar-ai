@@ -161,6 +161,7 @@ export interface OpportunitiesResponse {
     modeled_round_trip_cost_per_gram: number;
     modeled_net_spread_per_gram: number;
     total_modeled_cost_inr: number;
+    z_score?: number | null;
     passes_liquidity: boolean;
   }>;
   total_count: number;

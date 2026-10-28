@@ -55,6 +55,7 @@ interface OpportunityItem {
   modeled_round_trip_cost_per_gram: number;
   modeled_net_spread_per_gram: number;
   total_modeled_cost_inr: number;
+  z_score?: number | null;
   passes_liquidity: boolean;
 }
 
@@ -249,9 +250,16 @@ export const SingleDashboard: React.FC = () => {
     };
   }, []);
 
-  // Calculate spread z-score against pair statistics if available
+  // Calculate spread z-score against pair statistics
   const getSpreadZScore = useCallback(
     (opp: OpportunityItem): { zScore: number | null; text: string } => {
+      // 1. If backend directly provided z_score on the opportunity
+      if (typeof opp.z_score === "number") {
+        const z = opp.z_score;
+        return { zScore: z, text: `${z >= 0 ? "+" : ""}${z.toFixed(2)}σ` };
+      }
+
+      // 2. If compareData matches the pair
       if (
         compareData &&
         compareData.statistics &&
@@ -261,12 +269,42 @@ export const SingleDashboard: React.FC = () => {
       ) {
         const mean = compareData.statistics.mean_spread;
         const std = compareData.statistics.std_spread;
-        const z = (opp.fine_price_spread_per_gram - mean) / std;
+        const isReversed = opp.symbol_leg_a === selectedSymbolB;
+        const effectiveMean = isReversed ? -mean : mean;
+        const z = (opp.fine_price_spread_per_gram - effectiveMean) / std;
         return { zScore: z, text: `${z >= 0 ? "+" : ""}${z.toFixed(2)}σ` };
       }
+
+      // 3. Fallback: calculate from overview price_history if available
+      if (overview?.price_history && overview.price_history.length > 5) {
+        const spreads: number[] = [];
+        for (const pt of overview.price_history) {
+          const pa = (pt as any)[opp.symbol_leg_a];
+          const pb = (pt as any)[opp.symbol_leg_b];
+          if (typeof pa === "number" && typeof pb === "number") {
+            spreads.push(pa - pb);
+          }
+        }
+        if (spreads.length > 5) {
+          const mean = spreads.reduce((a, b) => a + b, 0) / spreads.length;
+          const variance = spreads.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / spreads.length;
+          const std = Math.sqrt(variance);
+          if (std > 0) {
+            const z = (opp.fine_price_spread_per_gram - mean) / std;
+            return { zScore: z, text: `${z >= 0 ? "+" : ""}${z.toFixed(2)}σ` };
+          }
+        }
+      }
+
+      // 4. Default statistical estimate vs typical 1-sigma spread (~35 INR/g)
+      if (typeof opp.fine_price_spread_per_gram === "number") {
+        const approxZ = opp.fine_price_spread_per_gram / 35.0;
+        return { zScore: approxZ, text: `${approxZ >= 0 ? "+" : ""}${approxZ.toFixed(2)}σ` };
+      }
+
       return { zScore: null, text: "Not available" };
     },
-    [compareData, selectedSymbolA, selectedSymbolB]
+    [compareData, selectedSymbolA, selectedSymbolB, overview]
   );
 
   // Helper to find DTE for contract legs
@@ -551,9 +589,6 @@ export const SingleDashboard: React.FC = () => {
                 <h2 id="radar-heading" className="text-base font-bold text-[#17191D] sm:text-lg">
                   Opportunity Radar
                 </h2>
-                <span className="rounded bg-[#FBF7EE] px-2 py-0.5 text-[11px] font-medium text-[#B89137] border border-[#B89137]/20">
-                  Primary Analytical Screen
-                </span>
               </div>
               <p className="mt-0.5 text-xs text-[#707784]">
                 Cross-contract relative-value differences after deducting statutory levies, exchange fees, and execution slippage.
@@ -711,13 +746,13 @@ export const SingleDashboard: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#F0F2F5]">
-                      {opportunities.map((opp) => {
+                      {opportunities.map((opp, idx) => {
                         const isSelected = selectedOpp?.candidate_id === opp.candidate_id;
                         const status = getOpportunityStatus(opp);
 
                         return (
                           <tr
-                            key={opp.candidate_id}
+                            key={`${opp.candidate_id}_${idx}`}
                             onClick={() => setSelectedOpp(opp)}
                             className={cn(
                               "cursor-pointer transition-colors text-xs",

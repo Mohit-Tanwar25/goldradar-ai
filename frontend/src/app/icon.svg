@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCE182" />
+      <stop offset="40%" stop-color="#D4AF37" />
+      <stop offset="80%" stop-color="#9A6F0D" />
+      <stop offset="100%" stop-color="#F0CE67" />
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1C1E24" />
+      <stop offset="100%" stop-color="#0D0E11" />
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCE182" />
+      <stop offset="100%" stop-color="#8A6208" />
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="2.5" />
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#D4AF37" stroke-width="1" stroke-opacity="0.25" stroke-dasharray="3 3" />
+  <circle cx="32" cy="32" r="16" fill="none" stroke="#D4AF37" stroke-width="1.2" stroke-opacity="0.4" />
+  <text x="32" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="800" fill="url(#goldGrad)" text-anchor="middle" dominant-baseline="middle" letter-spacing="-0.5">Au</text>
+  <circle cx="47" cy="17" r="2.5" fill="#FCE182" />
+</svg>

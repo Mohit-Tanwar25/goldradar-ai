@@ -565,6 +565,18 @@ def get_opportunities(
             "gst_pct": statutory.get("gst_on_charges_pct", 18.0)
         })
 
+    # Pre-calculate historical pair spread distribution statistics from radar
+    pair_stats = {}
+    if not radar_df.empty and "fine_price_difference_per_gram" in radar_df.columns:
+        for (sa, sb), g in radar_df.groupby(["symbol_a", "symbol_b"]):
+            spreads = g["fine_price_difference_per_gram"].dropna()
+            if len(spreads) > 1:
+                s_val = float(spreads.std())
+                if s_val > 0:
+                    m_val = float(spreads.mean())
+                    pair_stats[(sa, sb)] = (m_val, s_val)
+                    pair_stats[(sb, sa)] = (-m_val, s_val)
+
     # Opportunities list from eligible_candidates merged with cost scenario info
     opps_list = []
     candidates_to_use = elig_df.copy()
@@ -594,6 +606,14 @@ def get_opportunities(
             "modeled_net_spread": round(float(r.get('fine_price_spread_per_gram', 0.0)) - 18.5, 2)
         })
         spread = round(float(r.get('fine_price_spread_per_gram', 0.0)), 2)
+        sla = str(r.get("symbol_leg_a", ""))
+        slb = str(r.get("symbol_leg_b", ""))
+        z_val = None
+        if (sla, slb) in pair_stats:
+            m_stat, s_stat = pair_stats[(sla, slb)]
+            z_val = round((spread - m_stat) / s_stat, 2)
+        elif abs(spread) > 0:
+            z_val = round(spread / 35.0, 2)
         opps_list.append({
             "candidate_id": cid,
             "date": _clean_val(r.get('date')),
@@ -606,6 +626,7 @@ def get_opportunities(
             "modeled_round_trip_cost_per_gram": cinfo["round_trip_cost_per_gram"],
             "modeled_net_spread_per_gram": cinfo["modeled_net_spread"],
             "total_modeled_cost_inr": cinfo["total_cost_inr"],
+            "z_score": z_val,
             "passes_liquidity": True
         })
 

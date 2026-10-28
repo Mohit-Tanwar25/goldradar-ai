@@ -216,11 +216,37 @@ export const CustomDataInspector: React.FC = () => {
     };
   }, [simSymbolA, simPriceA, simSymbolB, simPriceB, simScenario, normalizePrice]);
 
+// Robust CSV line parser that handles quotes and commas within numeric fields
+function parseCsvRow(row: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let insideQuotes = false;
+  for (let i = 0; i < row.length; i++) {
+    const char = row[i];
+    if (char === '"' || char === "'") {
+      insideQuotes = !insideQuotes;
+    } else if (char === "," && !insideQuotes) {
+      result.push(current.trim().replace(/^["']|["']$/g, ""));
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim().replace(/^["']|["']$/g, ""));
+  return result;
+}
+
   // Handle CSV file upload
   const handleFileUpload = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
+
+      // Protection against massive files causing memory exhaustion
+      if (file.size > 25 * 1024 * 1024) {
+        setParseError("File size exceeds 25 MB. Please provide a daily or trimmed MCX Bhavcopy file.");
+        return;
+      }
 
       setFileName(file.name);
       setParseError(null);
@@ -244,41 +270,134 @@ export const CustomDataInspector: React.FC = () => {
             return;
           }
 
-          const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/['"]/g, ""));
-          const dateIdx = headers.findIndex((h) => h.includes("date"));
-          const symbolIdx = headers.findIndex((h) => h.includes("symbol") || h.includes("contract"));
-          const priceIdx = headers.findIndex((h) => h.includes("price") || h.includes("close") || h.includes("settle"));
-          const volumeIdx = headers.findIndex((h) => h.includes("volume") || h.includes("vol"));
-          const oiIdx = headers.findIndex((h) => h.includes("oi") || h.includes("interest"));
-          const expiryIdx = headers.findIndex((h) => h.includes("expiry"));
+          const headers = parseCsvRow(lines[0]).map((h) => h.trim().toLowerCase().replace(/['"]/g, ""));
+
+          // 1. Symbol column: prioritize exact symbol/commodity/ticker (DO NOT match "instrument name"!)
+          let symbolIdx = headers.findIndex((h) => h === "symbol" || h === "tckrsymb" || h === "commodity");
+          if (symbolIdx === -1) {
+            symbolIdx = headers.findIndex((h) => (h.includes("symbol") || h.includes("tckrsymb") || h.includes("commodity")) && !h.includes("instrument"));
+          }
+          if (symbolIdx === -1) {
+            symbolIdx = headers.findIndex((h) => (h.includes("contract") || h.includes("scrip") || h.includes("fininstrmnm")) && !h.includes("type"));
+          }
+          if (symbolIdx === -1) {
+            symbolIdx = headers.findIndex((h) => h.includes("instrument"));
+          }
+
+          // 2. Price column: Close / Settle / LTP (EXCLUDE Strike Price, Previous Close)
+          let priceIdx = headers.findIndex((h) =>
+            (h.includes("settle") || h.includes("close") || h === "clspric" || h === "close_price" || h === "settle_pr" || h === "settlement_price") &&
+            !h.includes("prev") && !h.includes("prvs") && !h.includes("strike") && !h.includes("strk")
+          );
+          if (priceIdx === -1) {
+            priceIdx = headers.findIndex((h) =>
+              (h.includes("price") || h.includes("pric") || h.includes("ltp") || h.includes("last")) &&
+              !h.includes("strike") && !h.includes("strk") && !h.includes("prev") && !h.includes("prvs")
+            );
+          }
+          if (priceIdx === -1) {
+            priceIdx = headers.findIndex((h) => h.includes("open") && !h.includes("interest"));
+          }
+
+          // 3. Strike Price column (to filter options)
+          const strikeIdx = headers.findIndex((h) => h.includes("strike") || h.includes("strk"));
+
+          // 4. Option Type column (to filter CE / PE options)
+          const optTypeIdx = headers.findIndex((h) => (h.includes("option") || h.includes("optn") || h === "opt_type") && !h.includes("name"));
+
+          // 5. Expiry Date column
+          const expiryIdx = headers.findIndex((h) => h.includes("expiry") || h.includes("xpry") || h.includes("exp_date") || h.includes("exp_dt"));
+
+          // 6. Trade Date column
+          let dateIdx = headers.findIndex((h) => (h.includes("date") || h.includes("traddt") || h.includes("bizdt") || h.includes("timestamp")) && !h.includes("expiry") && !h.includes("xpry"));
+
+          // 7. Volume column
+          const volumeIdx = headers.findIndex((h) => (h.includes("volume") || h.includes("vol") || h.includes("ttltradgvol") || h.includes("contracts") || h.includes("qty")) && !h.includes("value") && !h.includes("val"));
+
+          // 8. Open Interest column
+          const oiIdx = headers.findIndex((h) => h.includes("open_int") || h.includes("openinterest") || h === "oi" || (h.includes("interest") && !h.includes("chg")));
 
           if (priceIdx === -1) {
-            setParseError("Could not find a 'Price', 'Close', or 'Settlement' column in the CSV header.");
+            setParseError("Could not identify a settlement or closing price column in the CSV header.");
             return;
           }
 
+          // Pre-scan: Check if the file contains specific gold contracts
+          let hasGoldContracts = false;
+          for (let i = 1; i < Math.min(lines.length, 500); i++) {
+            const cols = parseCsvRow(lines[i]);
+            const s = symbolIdx !== -1 && cols[symbolIdx] ? cols[symbolIdx].toUpperCase() : "";
+            if (s.includes("GOLD") || s.startsWith("AU")) {
+              hasGoldContracts = true;
+              break;
+            }
+          }
+
           const records: ParsedRecord[] = [];
+          const seenKeys = new Set<string>();
+          const MAX_IMPORTED_ROWS = 300;
 
           for (let i = 1; i < lines.length; i++) {
-            const cols = lines[i].split(",").map((c) => c.trim().replace(/['"]/g, ""));
+            if (records.length >= MAX_IMPORTED_ROWS) break;
+
+            const cols = parseCsvRow(lines[i]);
             if (cols.length <= priceIdx) continue;
+
+            // Raw contract symbol extracted from matched column
+            const extractedSym = symbolIdx !== -1 && cols[symbolIdx] ? cols[symbolIdx].toUpperCase().trim() : "GOLDM";
+
+            // If file contains gold contracts, filter out non-gold commodities (like Crude, Silver, Copper, Agri)
+            if (hasGoldContracts && !extractedSym.includes("GOLD") && !extractedSym.startsWith("AU")) {
+              continue;
+            }
+
+            // Skip option strikes if strike price or option type is present (only futures for parity radar)
+            if (strikeIdx !== -1 && cols[strikeIdx]) {
+              const strike = parseFloat(cols[strikeIdx].replace(/[₹,\s]/g, ""));
+              if (!isNaN(strike) && strike > 0) continue;
+            }
+            if (optTypeIdx !== -1 && cols[optTypeIdx]) {
+              const opt = cols[optTypeIdx].toUpperCase().trim();
+              if (opt === "CE" || opt === "PE" || opt === "CA" || opt === "PA") continue;
+            }
 
             const cleanPrice = cols[priceIdx].replace(/[₹,\s]/g, "");
             const rawPrice = parseFloat(cleanPrice);
             if (isNaN(rawPrice) || rawPrice <= 0) continue;
 
-            const rawSymbol = symbolIdx !== -1 && cols[symbolIdx] ? cols[symbolIdx].toUpperCase().trim() : "GOLDM";
+            // Normalize symbol to recognized MCX key (GOLD, GOLDM, GOLDTEN, GOLDGUINEA, GOLDPETAL)
+            let canonicalSymbol = extractedSym;
+            const rootWord = extractedSym.split(/[\s_-]+/)[0];
+            if (MCX_SPECS[rootWord]) {
+              canonicalSymbol = rootWord;
+            } else if (extractedSym.includes("GOLDM")) {
+              canonicalSymbol = "GOLDM";
+            } else if (extractedSym.includes("GOLDTEN")) {
+              canonicalSymbol = "GOLDTEN";
+            } else if (extractedSym.includes("GOLDGUINEA")) {
+              canonicalSymbol = "GOLDGUINEA";
+            } else if (extractedSym.includes("GOLDPETAL")) {
+              canonicalSymbol = "GOLDPETAL";
+            } else if (extractedSym.startsWith("GOLD")) {
+              canonicalSymbol = "GOLD";
+            }
+
             const dateStr = dateIdx !== -1 && cols[dateIdx] ? cols[dateIdx].trim() : new Date().toISOString().split("T")[0];
             const expStr = expiryIdx !== -1 && cols[expiryIdx] ? cols[expiryIdx].trim() : undefined;
             const vol = volumeIdx !== -1 ? parseInt(cols[volumeIdx].replace(/[,\s]/g, ""), 10) : undefined;
             const oi = oiIdx !== -1 ? parseInt(cols[oiIdx].replace(/[,\s]/g, ""), 10) : undefined;
 
-            const normPrice = normalizePrice(rawSymbol, rawPrice);
+            // Deduplicate rows with identical contract date, symbol and expiry
+            const dedupKey = `${dateStr}_${canonicalSymbol}_${expStr || ""}`;
+            if (seenKeys.has(dedupKey)) continue;
+            seenKeys.add(dedupKey);
+
+            const normPrice = normalizePrice(canonicalSymbol, rawPrice);
 
             records.push({
-              id: `rec_${i}_${rawSymbol}`,
+              id: `rec_${i}_${canonicalSymbol}_${expStr || ""}_${records.length}`,
               date: dateStr,
-              symbol: rawSymbol,
+              symbol: canonicalSymbol,
               expiryDate: expStr,
               quotedPrice: rawPrice,
               normalizedPrice: normPrice,
@@ -288,7 +407,7 @@ export const CustomDataInspector: React.FC = () => {
           }
 
           if (records.length === 0) {
-            setParseError("No valid rows could be processed. Check column names and numeric price values.");
+            setParseError("No valid gold contract rows could be processed. Please check column names or ensure the file contains MCX Gold contracts.");
             return;
           }
 
@@ -300,6 +419,8 @@ export const CustomDataInspector: React.FC = () => {
       };
 
       reader.readAsText(file);
+      // Reset input value so the same file can be re-selected if modified
+      event.target.value = "";
     },
     [normalizePrice]
   );
@@ -360,11 +481,13 @@ export const CustomDataInspector: React.FC = () => {
     const pairs: AnalyzedPair[] = [];
 
     Object.entries(byDate).forEach(([date, recs]) => {
-      for (let i = 0; i < recs.length; i++) {
-        for (let j = i + 1; j < recs.length; j++) {
-          const a = recs[i];
-          const b = recs[j];
-          if (a.symbol === b.symbol && a.expiryDate === b.expiryDate) continue;
+      // Cap per-date contracts to 25 to prevent quadratic combinatorial explosion
+      const safeRecs = recs.slice(0, 25);
+      for (let i = 0; i < safeRecs.length; i++) {
+        for (let j = i + 1; j < safeRecs.length; j++) {
+          const a = safeRecs[i];
+          const b = safeRecs[j];
+          if (a.symbol === b.symbol && (a.expiryDate || "") === (b.expiryDate || "")) continue;
 
           const gross = a.normalizedPrice - b.normalizedPrice;
           const absSpread = Math.abs(gross);
@@ -385,10 +508,10 @@ export const CustomDataInspector: React.FC = () => {
           }
 
           pairs.push({
-            id: `pair_${date}_${a.symbol}_${b.symbol}`,
+            id: `pair_${date}_${a.symbol}_${a.expiryDate || i}_${b.symbol}_${b.expiryDate || j}_${i}_${j}`,
             date,
-            contractA: a.symbol,
-            contractB: b.symbol,
+            contractA: a.expiryDate ? `${a.symbol} (${a.expiryDate})` : a.symbol,
+            contractB: b.expiryDate ? `${b.symbol} (${b.expiryDate})` : b.symbol,
             priceA: a.quotedPrice,
             priceB: b.quotedPrice,
             finePriceA: a.normalizedPrice,
@@ -403,7 +526,9 @@ export const CustomDataInspector: React.FC = () => {
       }
     });
 
-    return pairs;
+    // Sort by largest absolute net spread descending and cap to top 100 high-opportunity pairs
+    pairs.sort((x, y) => Math.abs(y.netSpread) - Math.abs(x.netSpread));
+    return pairs.slice(0, 100);
   }, [parsedRows]);
 
   return (
@@ -422,9 +547,6 @@ export const CustomDataInspector: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="font-semibold text-sm text-[#17191D]">
                 Interactive MCX Custom Data Inspector
-              </span>
-              <span className="rounded bg-[#ECFDF5] px-1.5 py-0.5 text-[10px] font-semibold text-[#0D8244] border border-[#0D8244]/20">
-                Interactive Tool
               </span>
             </div>
             <p className="text-xs text-[#707784] mt-0.5">
@@ -801,8 +923,15 @@ export const CustomDataInspector: React.FC = () => {
                   {/* Summary of evaluated pairs */}
                   {analyzedPairs.length > 0 && (
                     <div className="p-3">
-                      <div className="font-semibold text-xs text-[#17191D] mb-2">
-                        MCX Relative-Spread Cross Matrix:
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-semibold text-xs text-[#17191D]">
+                          MCX Relative-Spread Cross Matrix:
+                        </div>
+                        {analyzedPairs.length > 50 && (
+                          <span className="text-[10px] text-[#707784] font-medium bg-[#F1F3F6] px-2 py-0.5 rounded">
+                            Showing top 50 of {analyzedPairs.length} highest-edge pairs
+                          </span>
+                        )}
                       </div>
                       <div className="overflow-x-auto max-h-56">
                         <table className="w-full text-left text-xs">
@@ -819,7 +948,7 @@ export const CustomDataInspector: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#F0F2F5]">
-                            {analyzedPairs.map((p) => (
+                            {analyzedPairs.slice(0, 50).map((p) => (
                               <tr key={p.id} className="hover:bg-[#FAFBFC]">
                                 <td className="py-2 px-3 text-[#707784] font-mono text-[11px]">{p.date}</td>
                                 <td className="py-2 px-2 font-medium text-[#17191D]">
@@ -864,8 +993,15 @@ export const CustomDataInspector: React.FC = () => {
 
                   {/* Raw Uploaded Records list */}
                   <div className="p-3 border-t border-[#F0F2F5]">
-                    <div className="font-semibold text-xs text-[#17191D] mb-2">
-                      Individual Normalized Quotes:
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-semibold text-xs text-[#17191D]">
+                        Individual Normalized Quotes:
+                      </div>
+                      {parsedRows.length > 50 && (
+                        <span className="text-[10px] text-[#707784] font-medium bg-[#F1F3F6] px-2 py-0.5 rounded">
+                          Showing first 50 of {parsedRows.length} imported quotes
+                        </span>
+                      )}
                     </div>
                     <div className="overflow-x-auto max-h-48">
                       <table className="w-full text-left text-[11px]">
@@ -881,7 +1017,7 @@ export const CustomDataInspector: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#F0F2F5]">
-                          {parsedRows.map((r) => (
+                          {parsedRows.slice(0, 50).map((r) => (
                             <tr key={r.id} className="hover:bg-[#FAFBFC]">
                               <td className="py-1.5 px-3 text-[#707784] font-mono">{r.date}</td>
                               <td className="py-1.5 px-2 font-medium text-[#17191D]">{r.symbol}</td>
