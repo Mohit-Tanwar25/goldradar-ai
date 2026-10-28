@@ -18,11 +18,10 @@
 
 **Gold Contract Radar** is a quantitative research workstation and financial analytics dashboard engineered for Indian gold commodity derivatives. It normalizes distinct contract purities and lot sizes to a common 999 fine-gold benchmark (₹/gram), tracks relative-value spreads, models statutory friction, and evaluates walk-forward backtest simulations.
 
-The entire user experience is consolidated into a **single, unified, minimalist dashboard**:
+The application is structured as a clean, decoupled monorepo:
 
-- **Frontend:** Next.js (App Router), React 19, TypeScript, Tailwind CSS, Lucide Icons, and Recharts.
-- **Backend API:** Python FastAPI exposing high-performance REST endpoints.
-- **Analytics Engine:** Python, Pandas, and NumPy preserving 100% of the underlying mathematical formulas, purity normalization, statutory cost schedules, and walk-forward simulations.
+- **`/frontend`**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Lucide Icons, and Recharts.
+- **`/backend`**: Python FastAPI REST service, Pandas/NumPy analytics engine, MCX contract specs, and canonical datasets.
 
 ### Minimalist Financial Design
 - **Content-Driven:** Pure white content cards on a subtle `#F7F8FA` background with clean `#E7E9ED` dividers and dark typography (`#17191D`).
@@ -129,18 +128,20 @@ git clone https://github.com/Mohit-Tanwar25/goldradar-ai.git
 cd goldradar-ai
 ```
 
-### Step 2: Set Up Python Environment
+### Step 2: Set Up Python Backend
 ```bash
-# Create virtual environment
+# Create and activate virtual environment
 python -m venv .venv
 
-# Activate on Windows:
+# Windows:
 .\.venv\Scripts\activate
-# Activate on macOS/Linux:
+# macOS/Linux:
 source .venv/bin/activate
 
 # Install backend dependencies
+cd backend
 pip install -r requirements.txt
+cd ..
 ```
 
 ### Step 3: Set Up Frontend
@@ -182,6 +183,7 @@ If creating services manually in the Render dashboard:
 
 1. **Backend Web Service:**
    - **Runtime:** Python 3
+   - **Root Directory:** `backend`
    - **Build Command:** `pip install -r requirements.txt`
    - **Start Command:** `uvicorn api.main:app --host 0.0.0.0 --port $PORT`
    - **Environment Variable:** `PYTHON_VERSION=3.11.1`
@@ -201,7 +203,9 @@ If creating services manually in the Render dashboard:
 
 Run the complete backend test suite:
 ```bash
+cd backend
 python -m unittest tests/test_dashboard.py tests/test_independent_audit_reconciliation.py
+cd ..
 ```
 
 Run frontend TypeScript and production build checks:

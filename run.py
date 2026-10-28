@@ -10,13 +10,18 @@ import signal
 import time
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.join(PROJECT_ROOT, "backend")
 FRONTEND_DIR = os.path.join(PROJECT_ROOT, "frontend")
 
 # Locate Python in venv if available, otherwise fallback to sys.executable
 if os.name == "nt":
     venv_python = os.path.join(PROJECT_ROOT, ".venv", "Scripts", "python.exe")
+    if not os.path.exists(venv_python):
+        venv_python = os.path.join(BACKEND_DIR, ".venv", "Scripts", "python.exe")
 else:
     venv_python = os.path.join(PROJECT_ROOT, ".venv", "bin", "python")
+    if not os.path.exists(venv_python):
+        venv_python = os.path.join(BACKEND_DIR, ".venv", "bin", "python")
 
 python_bin = venv_python if os.path.exists(venv_python) else sys.executable
 npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
@@ -55,7 +60,7 @@ def main():
         "--reload"
     ]
     print("Starting FastAPI Backend (Port 8000)...")
-    backend_proc = subprocess.Popen(api_cmd, cwd=PROJECT_ROOT)
+    backend_proc = subprocess.Popen(api_cmd, cwd=BACKEND_DIR)
 
     time.sleep(1.5)
 

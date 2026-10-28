@@ -3,7 +3,14 @@ Gold Contract Radar — FastAPI Endpoint Test Suite
 Validates all endpoints, responses, schemas, and parameter filters.
 """
 
+import os
+import sys
 import unittest
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 from fastapi.testclient import TestClient
 from api.main import app
 
