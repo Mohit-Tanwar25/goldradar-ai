@@ -22,6 +22,7 @@ import { GoldPriceHistoryChart } from "@/components/charts/GoldPriceHistoryChart
 import { SpreadChart } from "@/components/charts/SpreadChart";
 import { FuturesCurveChart } from "@/components/charts/FuturesCurveChart";
 import { EquityCurveChart } from "@/components/charts/EquityCurveChart";
+import { CustomDataInspector } from "@/components/dashboard/CustomDataInspector";
 import { formatINR, formatPct, formatNumber, formatDate, cn } from "@/lib/utils";
 import {
   RefreshCw,
@@ -535,6 +536,9 @@ export const SingleDashboard: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* Interactive Custom Data Inspector & File Upload Simulator */}
+        <CustomDataInspector />
 
         {/* ========================================================= */}
         {/* C. OPPORTUNITY RADAR — THE MAIN SECTION */}

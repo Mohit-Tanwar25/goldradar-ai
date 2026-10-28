@@ -61,6 +61,12 @@ Four compact top-level metrics normalized to ₹/gram (999 pure fine gold):
 - **Active Contracts:** Number of active MCX gold instruments tracked (4).
 - **Eligible Research Opportunities:** Count of contract pairs currently clearing modeled transaction cost hurdles.
 
+### Interactive MCX Custom Inspector & CSV File Upload
+Allows users and evaluators to interactively simulate quotes or upload custom datasets:
+- **Live Quote Simulator:** Enter custom prices for any two MCX contracts (`GOLDM`, `GOLDTEN`, `GOLDGUINEA`, `GOLDPETAL`) to see real-time normalized fine prices, gross spread, itemized statutory friction (CTT, Stamp Duty, Exchange fees, SEBI, GST, Slippage), and MCX parity verdict.
+- **CSV / Bhavcopy File Upload:** Drag-and-drop custom `.csv` files to batch-normalize prices to fine gold and generate a pairwise relative-spread matrix.
+- **Quick Test Buttons:** Includes **"Load Sample MCX Quotes"** for 1-click testing and **"Download Template (.csv)"** for custom data preparation.
+
 ### C. Opportunity Radar & One-Click CSV Export
 The primary research screen evaluating cross-contract relative-value differences:
 - **Filters:** Interactive toggle between friction scenarios (`Base Case`, `Low Cost`, `High Cost`) and contract symbol filters.
