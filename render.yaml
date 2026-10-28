@@ -13,7 +13,7 @@ services:
 
   # 2. Next.js Single Dashboard Frontend
   - type: web
-    name: goldradar-frontend
+    name: goldradar-ai
     runtime: node
     plan: free
     rootDir: frontend
