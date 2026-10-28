@@ -7,18 +7,13 @@ import {
   MethodologyResponse,
 } from "@/types/api";
 
-function getCleanBaseUrl(): string {
-  const raw = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000")
-    .trim()
-    .replace(/\/+$/, "");
-  // If the user appended /api to the base URL, strip it to prevent /api/api/...
-  if (/\/+api$/i.test(raw)) {
-    return raw.replace(/\/+api$/i, "");
-  }
-  return raw;
+const RAW_API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+let cleanBaseUrl = RAW_API_URL.trim().replace(/\/+$/, "");
+if (cleanBaseUrl && !cleanBaseUrl.startsWith("http://") && !cleanBaseUrl.startsWith("https://")) {
+  cleanBaseUrl = `https://${cleanBaseUrl}`;
 }
-
-const API_BASE_URL = getCleanBaseUrl();
+const API_BASE_URL = cleanBaseUrl;
 
 async function fetchJson<T>(endpoint: string): Promise<T> {
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
@@ -41,6 +36,11 @@ async function fetchJson<T>(endpoint: string): Promise<T> {
     return (await res.json()) as T;
   } catch (error: any) {
     console.error(`Fetch error at ${url}:`, error);
+    if (error?.message?.includes("Failed to fetch") || error?.name === "TypeError") {
+      throw new Error(
+        "Unable to reach the analytics backend. If the service was idle on Render Free tier, it may take 30–50 seconds to wake up. Please click Retry."
+      );
+    }
     throw error;
   }
 }
